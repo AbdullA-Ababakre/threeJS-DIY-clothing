@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>AVAR | Avatar</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+  <link type="text/css" rel="stylesheet" href="index.css" />
+</head>
+
+<body>
+  <div id="info">
+    <div class="content">
+      <div class="cloths option">
+        <img class="logo" src="./log.png" alt="" />
+      </div>
+      <div class="btns">
+        <button id="changeCloth">
+          <p>cloth</p>
+        </button>
+        <button id="changeHair">
+          <p>hair</p>
+        </button>
+        <button id="changeHeadwear">
+          <p>headwear</p>
+        </button>
+      </div>
+      <div class="avatar"></div>
+      <div class="actions option"></div>
+      <!-- <button id="del"> del mesh </button> -->
+
+      <!-- Import maps polyfill -->
+      <!-- Remove this when import maps will be widely supported -->
+      <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+      <script type="importmap">
+          {
+            "imports": {
+              "three": "./build/three.module.js"
+            }
+          }
+      </script>
+
+      <!-- <script> -->
+      <script type="module">
+        import * as THREE from "three";
+        let avatar = document.getElementsByClassName("avatar");
+        let camera, scene, renderer;
+        let clothId = 1;
+        let clock;
+        const mixers = []
+
+        import { OrbitControls } from "./jsm/controls/OrbitControls.js";
+        import { GLTFLoader } from "./jsm/loaders/GLTFLoader.js";
+        import { RGBELoader } from "./jsm/loaders/RGBELoader.js";
+
+
+        init();
+        render();
+        document.getElementById("changeCloth").onclick = changeCloth;
+        document.getElementById("changeHair").onclick = changeHair;
+        document.getElementById("changeHeadwear").onclick = changeHeadwear;
+        function changeCloth() {
+          console.log("change cloth");
+          if (clothId == 6) {
+            clothId = 1;
+          } else {
+            clothId += 1;
+          }
+          const clothName = {
+            1: "battle.glb",
+            2: "dream.glb",
+            3: "wave.glb",
+            4: "jingying.glb",
+            5: "xiegu.glb",
+            6: "yuehua.glb",
+          };
+          var selectedCloth = clothName[clothId];
+          const loader = new GLTFLoader().setPath("./glb/cloth/");
+          loader.load(selectedCloth, function (gltf) {
+            gltf.scene.name = "cloth";
+            scene.remove(scene.getObjectByName("cloth"));
+            scene.add(gltf.scene);
+            render();
+          });
+        }
+
+        function changeHair() {
+          console.log("change hair");
+          if (clothId >= 3) {
+            clothId = 1;
+          } else {
+            clothId += 1;
+          }
+          const clothName = {
+            1: "bunhair.glb",
+            2: "shorthair.glb",
+            3: "twobunhair.glb",
+          };
+          var selectedCloth = clothName[clothId];
+          const loader = new GLTFLoader().setPath("./glb/hair/");
+          loader.load(selectedCloth, function (gltf) {
+            gltf.scene.name = "hair";
+            scene.remove(scene.getObjectByName("hair"));
+            scene.add(gltf.scene);
+            render();
+          });
+        }
+        function changeHeadwear() {
+          console.log("change headwear");
+          if (clothId >= 3) {
+            clothId = 1;
+          } else {
+            clothId += 1;
+          }
+          const clothName = {
+            1: "batear.glb",
+            2: "crown.glb",
+            3: "rose.glb",
+          };
+          var selectedCloth = clothName[clothId];
+          const loader = new GLTFLoader().setPath("./glb/headwear/");
+          loader.load(selectedCloth, function (gltf) {
+            gltf.scene.name = "headwear";
+            scene.remove(scene.getObjectByName("headwear"));
+            scene.add(gltf.scene);
+            render();
+          });
+        }
+
+        function init() {
+          clock = new THREE.Clock();
+          const container = document.createElement("div");
+          avatar[0].appendChild(container);
+
+          camera = new THREE.PerspectiveCamera(
+            45,
+            window.innerWidth / window.innerHeight,
+            0.25,
+            2000
+          );
+          // camera.position.set( - 1.8, 0.6, 2.7 );
+          camera.position.set(-1.8, 10, 270);
+          scene = new THREE.Scene();
+
+          const loader = new GLTFLoader().setPath("./glb/");
+          let fbxanimation;
+
+          loader.load("./animation/wave.glb", function (gltf) {
+            fbxanimation = gltf.animations[0];
+          });
+
+          loader.load("./avatar/avatar_girl.glb", function (gltf) {
+            // console.log(gltf)
+            gltf.scene.name = "body";
+            const mixer = new THREE.AnimationMixer(gltf.scene);
+            mixer.clipAction(fbxanimation).play();
+            mixers.push(mixer)
+            scene.add(gltf.scene);
+            render();
+          });
+          loader.load("./cloth/battle.glb", function (gltf) {
+            gltf.scene.name = "cloth";
+            scene.add(gltf.scene);
+            render();
+          });
+          loader.load("./shoes/guidi.glb", function (gltf) {
+            gltf.scene.name = "shoes";
+            scene.add(gltf.scene);
+            render();
+          });
+          loader.load("./hair/bunhair.glb", function (gltf) {
+            gltf.scene.name = "hair";
+            scene.add(gltf.scene);
+            render();
+          });
+          loader.load("./headwear/batear.glb", function (gltf) {
+            gltf.scene.name = "headwear";
+            scene.add(gltf.scene);
+            render();
+          });
+
+          new RGBELoader()
+            .setPath("textures/")
+            .load("venice_sunset_1k.hdr", function (texture) {
+              texture.mapping = THREE.EquirectangularReflectionMapping;
+
+              // scene.background = texture;
+              scene.environment = texture;
+              render();
+            });
+
+          renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+          });
+          renderer.setPixelRatio(window.devicePixelRatio);
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          renderer.toneMapping = THREE.ACESFilmicToneMapping;
+          renderer.toneMappingExposure = 1;
+          renderer.outputEncoding = THREE.sRGBEncoding;
+          container.appendChild(renderer.domElement);
+
+          const controls = new OrbitControls(camera, renderer.domElement);
+          // controls.autoRotate = true
+          controls.maxPolarAngle = (3 * Math.PI) / 4;
+          controls.addEventListener("change", render); // use if there is no animation loop
+          controls.minDistance = 1.5;
+          controls.maxDistance = 3;
+          controls.target.set(0, 1.2, 0);
+          controls.update();
+
+          window.addEventListener("resize", onWindowResize);
+          animate();
+        }
+
+
+        function onWindowResize() {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+
+          renderer.setSize(window.innerWidth, window.innerHeight);
+
+          render();
+        }
+
+        //fix issue
+
+        function initBtn() {
+          const clothArr = [
+            "battle",
+            "dream",
+            "wave",
+            "jingying",
+            "xiegu",
+            "yuehua",
+          ];
+          const hairArr = ["bunhair", "shorthair", "twobunhair"];
+          const headwearArr = ["batear", "crown", "rose"];
+          let clothDiv = document.getElementsByClassName("cloths");
+          let hairDiv = document.getElementsByClassName("actions");
+          function func1(ele, arr, path) {
+            arr.map((item, index) => {
+              const btnItem = document.createElement("div");
+              ele[0].appendChild(btnItem);
+              const imgItem = document.createElement("img");
+              btnItem.appendChild(imgItem);
+              imgItem.src = `./glb/${path}/${item}.png`;
+              btnItem.onclick = () => {
+                const loader = new GLTFLoader();
+                loader.load(`./glb/${path}/${item}.glb`, function (gltf) {
+                  gltf.scene.name = path;
+                  scene.remove(scene.getObjectByName(path));
+                  scene.add(gltf.scene);
+                  render();
+                });
+              };
+            });
+          }
+          func1(clothDiv, clothArr, "cloth");
+          func1(hairDiv, headwearArr, "headwear");
+          func1(hairDiv, hairArr, "hair");
+        }
+        initBtn();
+
+        function render() {
+          renderer.render(scene, camera);
+        }
+
+        function animate() {
+
+          requestAnimationFrame(animate);
+
+          const delta = clock.getDelta();
+
+          for (const mixer of mixers) mixer.update(delta);
+
+          renderer.render(scene, camera);
+
+        }
+      </script>
+    </div>
+  </div>
+</body>
+
+</html>
